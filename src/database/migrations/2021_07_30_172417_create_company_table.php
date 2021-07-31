@@ -15,9 +15,8 @@ class CreateCompanyTable extends Migration
     {
         Schema::create('company', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('business_hours_id')->constrained('business_hours');
             $table->string('name', 75);
-            $table->geometry('location');
+            $table->geometry('location')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

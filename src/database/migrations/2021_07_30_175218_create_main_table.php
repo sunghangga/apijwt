@@ -15,6 +15,7 @@ class CreateMainTable extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('company_id')->constrained('company');
             $table->string('name', 75);
             $table->double('price', 15, 2)->default(0);
             $table->boolean('is_active')->default(0);
@@ -79,8 +80,9 @@ class CreateMainTable extends Migration
         });
 
         Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('company_id')->constrained('company')->after('password');
-            $table->geometry('location')->after('password');
+            $table->foreignId('company_id')->after('password')->nullable()->constrained('company');
+            $table->geometry('location')->after('password')->nullable();
+            $table->smallInteger('role_id')->after('password')->nullable();
         });
     }
 
