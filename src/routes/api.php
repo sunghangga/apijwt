@@ -34,4 +34,5 @@ Route::group([
 
     // Import Data
     Route::post('/import-restaurant', [ImportController::class, 'importJsonRestaurant']);
+    Route::post('/import-user', [ImportController::class, 'importJsonUser']);
 });

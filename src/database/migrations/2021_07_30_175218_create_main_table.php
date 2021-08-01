@@ -16,7 +16,7 @@ class CreateMainTable extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('company');
-            $table->string('name', 75);
+            $table->string('name', 125);
             $table->double('price', 15, 2)->default(0);
             $table->boolean('is_active')->default(0);
             $table->timestamps();
@@ -57,7 +57,8 @@ class CreateMainTable extends Migration
 
         Schema::create('company_balances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('accounts_id')->constrained('accounts');
+            $table->string('ac_code', 10);
+            $table->foreign('ac_code')->references('ac_code')->on('accounts');
             $table->foreignId('company_id')->constrained('company');
             $table->double('debit', 15, 2)->default(0);
             $table->double('credit', 15, 2)->default(0);
@@ -69,7 +70,8 @@ class CreateMainTable extends Migration
 
         Schema::create('customer_balances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('accounts_id')->constrained('accounts');
+            $table->string('ac_code', 10);
+            $table->foreign('ac_code')->references('ac_code')->on('accounts');
             $table->foreignId('users_id')->constrained('users');
             $table->double('debit', 15, 2)->default(0);
             $table->double('credit', 15, 2)->default(0);
