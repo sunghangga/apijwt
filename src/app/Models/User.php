@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use DB;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -52,5 +53,11 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public function getNextId() 
+    {
+        $statement = DB::select("show table status like 'users'");
+        return $statement[0]->Auto_increment;
     }
 }

@@ -155,7 +155,7 @@ class ImportController extends Controller
 
         // Process data import
         if (auth($this->guard)->user()->role_id == config('const.admin')) {
-            // try {
+            try {
                 DB::beginTransaction();
                 $jsonData = json_decode(file_get_contents($request->file('file')), true);
                 
@@ -166,7 +166,7 @@ class ImportController extends Controller
                         'name' => $value['name'],
                         'email' => GH::randMail(),
                         'password' => GH::randPass(),
-                        'role_id' => config('const.admin'),
+                        'role_id' => config('const.customer'),
                         'location' => DB::raw("GeomFromText('POINT(".$location[0]." ".$location[1].")')")
                     ]);
     
@@ -180,20 +180,58 @@ class ImportController extends Controller
     
                     // Create purchase
                     foreach ($value['purchases'] as $purchase) {
-                        $purchases = Purchases::create([
-                            'users_id' => $user->id,
-                            'company_id' => ,
-                            'pr_no' => ,
-                            'total' => ,
-                            'pay_status' => 
-                        ]);
+                        $data = Company::select('company.id AS company_id', 'products.id AS products_id')
+                                ->join('products', 'company.id', '=', 'products.company_id')
+                                ->where('company.name', '=', $purchase['restaurant_name'])
+                                ->where('products.name', '=', $purchase['dish'])
+                                ->first();
+                        
+                        if ($data) {
+                            $purchases = Purchases::create([
+                                'users_id' => $user->id,
+                                'company_id' => $data['company_id'],
+                                'pr_no' => GH::getPrNo(),
+                                'total' => $purchase['amount'],
+                                'pay_status' => config('const.paid'),
+                                'qty_total' => 1
+                            ]);
+    
+                            $purchaseDetail = PurchaseDetail::create([
+                                'purchases_id' => $purchases->id,
+                                'product_id' => $data['products_id'],
+                                'price' => $purchase['amount'],
+                                'qty' => 1
+                            ]);
+                        }
+                        else {
+                            $company = Company::create([
+                                'name' => $purchase['restaurant_name']
+                            ]);
 
-                        $purchaseDetail = PurchaseDetail::create([
-                            'purchases_id' => $purchases->id,
-                            'product_id' => ,
-                            'price' => ,
-                            'qty' => 
-                        ]);
+                            $products = Products::create([
+                                'name' => $purchase['dish'],
+                                'price' => $purchase['amount'],
+                                'is_active' => 0,
+                                'company_id' => $company->id
+                            ]);
+
+                            $purchases = Purchases::create([
+                                'users_id' => $user->id,
+                                'company_id' => $company->id,
+                                'pr_no' => GH::getPrNo(),
+                                'total' => $purchase['amount'],
+                                'pay_status' => config('const.paid'),
+                                'qty_total' => 1
+                            ]);
+    
+                            $purchaseDetail = PurchaseDetail::create([
+                                'purchases_id' => $purchases->id,
+                                'product_id' => $products->id,
+                                'price' => $purchase['amount'],
+                                'qty' => 1
+                            ]);
+                        }
+                        
                     }
                     
                 }
@@ -209,13 +247,13 @@ class ImportController extends Controller
                         "message" => "Import Failed"
                     ], 201);
                 }             
-            // } catch (\Exception $e) {
-            //     DB::rollback();
-            //     return response()->json([              
-            //         'message' => 'Unknown Error',     
-            //         'error' => $e               
-            //     ], 520);
-            // }
+            } catch (\Exception $e) {
+                DB::rollback();
+                return response()->json([              
+                    'message' => 'Unknown Error',     
+                    'error' => $e               
+                ], 520);
+            }
         }
         else {
             return response()->json([

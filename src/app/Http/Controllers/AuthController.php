@@ -113,7 +113,7 @@ class AuthController extends Controller
             return response()->json(['token_absent'], $e->getStatusCode());
 
         }
-
+        
         return response()->json(auth($this->guard)->user());
     }
 

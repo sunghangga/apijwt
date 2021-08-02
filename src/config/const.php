@@ -8,14 +8,17 @@ return [
     'company_cash' => '10000000',
     'customer_cash' => '20000000',
 
+    'paid' => 1,
+    'not_paid' => 0,
+
     'day_to_int' => [
-        'sunday' => 1,
-        'monday' => 2,
-        'tuesday' => 3,
-        'wednesday' => 4,
-        'thursday' => 5,
-        'friday' => 6,
-        'saturday' => 7,
+        'Sunday' => 1,
+        'Monday' => 2,
+        'Tuesday' => 3,
+        'Wednesday' => 4,
+        'Thursday' => 5,
+        'Friday' => 6,
+        'Saturday' => 7,
     ],
 
     'day_in_week' => [
