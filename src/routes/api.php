@@ -39,6 +39,14 @@ Route::group([
 
     // List restaurant by datetime
     Route::post('/list-restaurant-by-datetime', [ShowController::class, 'listRestaurantByDatetime']);
+    // List all restaurants within the vicinity of the user’s location or (any location), ranked by distance
+    Route::post('/list-restaurant-by-distance', [ShowController::class, 'listRestaurantByDistance']);
+    // List all restaurants that are open for x-z hours per day or week
+    Route::post('/list-restaurant-by-open-hours', [ShowController::class, 'listRestaurantByOpenHours']);
+    // List restaurant by price menu
+    Route::post('/list-restaurant-by-price', [ShowController::class, 'listRestaurantByPrice']);
+    // List restaurant or dish by search
+    Route::post('/list-restaurant-dish', [ShowController::class, 'listRestaurantDish']);
     // List restaurant by dish
     Route::post('/list-restaurant-by-dish', [ShowController::class, 'listRestaurantByDish']);
 });

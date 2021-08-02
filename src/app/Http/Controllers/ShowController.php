@@ -54,7 +54,9 @@ class ShowController extends Controller
         
         // Check validation
         $validator = Validator::make($request->all(), [
-            'datetime' => 'required|date_format:Y-m-d H:i:s'
+            'datetime' => 'required|date_format:Y-m-d H:i:s',
+            'offset' => 'required|numeric|min:0',
+            'limit' => 'required|numeric|min:0'
         ]);
 
         if($validator->fails()){
@@ -62,7 +64,7 @@ class ShowController extends Controller
         }
 
         // Process data import
-        if (auth($this->guard)->user()->role_id == config('const.admin') || auth($this->guard)->user()->role_id == config('const.customer')) {
+        if (auth($this->guard)->user()->role_id == config('const.customer')) {
             $dayTime = Carbon::parse($request->datetime)->isoFormat('dddd hh:mm:ss');
             $arrDayTime = explode(" ", $dayTime);
 
@@ -71,10 +73,169 @@ class ShowController extends Controller
                                 ->where('business_hours.day', '=', config('const.day_to_int')[$arrDayTime[0]])
                                 ->whereTime('business_hours.open_time', '<=', $arrDayTime[1])
                                 ->whereTime('business_hours.end_time', '>=', $arrDayTime[1])
+                                ->offset($request->offset)
+                                ->limit($request->limit)
                                 ->get();
             
             return response()->json([
                 "data" => $listRestaurant
+            ], 201);           
+        }
+        else {
+            return response()->json([
+                "message" => "Permission Denied!"
+            ], 201);
+        }
+    }
+
+    public function listRestaurantByDistance(Request $request) {
+        // Check auth
+        $this->checkAuth();
+        
+        // Check validation
+        $validator = Validator::make($request->all(), [
+            'latitude' => 'between:-90,90',
+            'longitude' => 'between:-180,180',
+            'offset' => 'required|numeric|min:0',
+            'limit' => 'required|numeric|min:0'
+        ]);
+
+        if($validator->fails()){
+            return response()->json($validator->errors()->toJson(), 400);
+        }
+
+        // Process data import
+        if (auth($this->guard)->user()->role_id == config('const.customer')) {
+            if (is_null($request->latitude) || is_null($request->longitude)) {
+                $userId = auth($this->guard)->user()->id;
+                $listRestaurant = Company::selectRaw('name AS restaurant_name, ST_Distance(location, (SELECT location FROM users WHERE id = ?)) distance', [$userId])
+                                ->orderBy('distance', 'asc')
+                                ->offset($request->offset)
+                                ->limit($request->limit)
+                                ->get();
+            }
+            else {
+                $listRestaurant = Company::selectRaw("name AS restaurant_name, ST_Distance(location, GeomFromText('POINT(".$request->latitude." ".$request->longitude.")')) distance")
+                        ->orderBy('distance', 'asc')
+                        ->offset($request->offset)
+                        ->limit($request->limit)
+                        ->get();
+            }
+            
+            return response()->json([
+                "data" => $listRestaurant
+            ], 201);           
+        }
+        else {
+            return response()->json([
+                "message" => "Permission Denied!"
+            ], 201);
+        }
+    }
+
+    public function listRestaurantByOpenHours(Request $request) {
+        // Check auth
+        $this->checkAuth();
+        
+        // Check validation
+        $validator = Validator::make($request->all(), [
+            'start_range_time' => 'required|numeric|min:0',
+            'end_range_time' => 'required|numeric|gte:start_range_time',
+            'offset' => 'required|numeric|min:0',
+            'limit' => 'required|numeric|min:0'
+        ]);
+
+        if($validator->fails()){
+            return response()->json($validator->errors()->toJson(), 400);
+        }
+
+        // Process data import
+        if (auth($this->guard)->user()->role_id == config('const.customer')) {
+            $listRestaurant = Company::selectRaw('company.name AS restaurant_name, AsText(company.location) AS location')
+                                ->join('business_hours', 'company.id', '=', 'business_hours.company_id')
+                                ->whereRaw('ABS(TIME_TO_SEC(TIMEDIFF(business_hours.end_time, business_hours.open_time))) BETWEEN ? and ?', [$request->start_range_time*3600, $request->end_range_time*3600])
+                                ->groupBy('restaurant_name', 'location')
+                                ->offset($request->offset)
+                                ->limit($request->limit)
+                                ->get();
+            
+            return response()->json([
+                "data" => $listRestaurant
+            ], 201);           
+        }
+        else {
+            return response()->json([
+                "message" => "Permission Denied!"
+            ], 201);
+        }
+    }
+
+    public function listRestaurantByPrice(Request $request) {
+        // Check auth
+        $this->checkAuth();
+        
+        // Check validation
+        $validator = Validator::make($request->all(), [
+            'lowest_price' => 'required|numeric|min:0',
+            'highest_price' => 'required|numeric|min:0',
+            'offset' => 'required|numeric|min:0',
+            'limit' => 'required|numeric|min:0'
+        ]);
+
+        if($validator->fails()){
+            return response()->json($validator->errors()->toJson(), 400);
+        }
+
+        // Process data import
+        if (auth($this->guard)->user()->role_id == config('const.customer')) {
+            $listRestaurant = Company::selectRaw('company.name AS restaurant_name, AsText(company.location) AS location')
+                                ->join('products', 'company.id', '=', 'products.company_id')
+                                ->where('products.price', '>=', $request->lowest_price)
+                                ->where('products.price', '<=', $request->highest_price)
+                                ->groupBy('restaurant_name', 'location')
+                                ->offset($request->offset)
+                                ->limit($request->limit)
+                                ->get();
+            
+            return response()->json([
+                "data" => $listRestaurant
+            ], 201);           
+        }
+        else {
+            return response()->json([
+                "message" => "Permission Denied!"
+            ], 201);
+        }
+    }
+
+    public function listRestaurantDish(Request $request) {
+        // Check auth
+        $this->checkAuth();
+        
+        // Check validation
+        $validator = Validator::make($request->all(), [
+            'search' => 'required',
+            'offset' => 'required|numeric|min:0',
+            'limit' => 'required|numeric|min:0'
+        ]);
+
+        if($validator->fails()){
+            return response()->json($validator->errors()->toJson(), 400);
+        }
+
+        // Process data import
+        if (auth($this->guard)->user()->role_id == config('const.customer')) {
+            $listDish = Products::selectRaw('company_id, name, "dish" AS type')
+                                ->whereRaw('LOWER(name) LIKE ? ', '%'.strtolower($request->search).'%');
+            $listRestaurantDish = Company::selectRaw('id as company_id, name, "company" AS type')
+                                ->whereRaw('LOWER(name) LIKE ? ', '%'.strtolower($request->search).'%')
+                                ->union($listDish)
+                                ->offset($request->offset)
+                                ->limit($request->limit)
+                                ->get();
+
+            return response()->json([
+                "data" => $listRestaurantDish
             ], 201);           
         }
         else {
@@ -98,7 +259,7 @@ class ShowController extends Controller
         }
 
         // Process data import
-        if (auth($this->guard)->user()->role_id == config('const.admin') || auth($this->guard)->user()->role_id == config('const.customer')) {
+        if (auth($this->guard)->user()->role_id == config('const.customer')) {
             $listRestaurant = Company::selectRaw('company.name AS restaurant_name, AsText(company.location) AS location')
                                 ->join('products', 'company.id', '=', 'products.company_id')
                                 ->whereRaw('LOWER(products.name) LIKE ? ', '%'.strtolower($request->dish).'%')

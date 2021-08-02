@@ -45,4 +45,11 @@ class GlobalHelper {
         $obj = new Purchases;
         return 'PR.'.Carbon::now()->format('ymd').'.'.str_pad($obj->getNextId(), 8, '0', STR_PAD_LEFT);
     }
+
+    public static function userById($id) {
+        $obj = User::selectRaw('id, name, email, email_verified_at, role_id, AsText(location) AS location, company_id, created_at, updated_at')
+                        ->where('id', '=', $id)
+                        ->get();
+        return $obj;
+    }
 }

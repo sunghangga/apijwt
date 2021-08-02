@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use App\Helpers\GlobalHelper as GH;
 
 class AuthController extends Controller
 {
@@ -114,7 +115,7 @@ class AuthController extends Controller
 
         }
         
-        return response()->json(auth($this->guard)->user());
+        return response()->json(GH::userById(auth($this->guard)->user()->id));
     }
 
     /**
@@ -129,7 +130,7 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth($this->guard)->factory()->getTTL() * 60,
-            'user' => auth($this->guard)->user()
+            'user' => GH::userById(auth($this->guard)->user()->id)
         ]);
     }
 }
