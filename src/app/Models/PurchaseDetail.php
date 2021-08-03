@@ -17,5 +17,7 @@ class PurchaseDetail extends Model
         'product_id',
         'price',
         'qty',
+        'created_at',
+        'updated_at'
     ];
 }

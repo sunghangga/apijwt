@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\ShowController;
+use App\Http\Controllers\PurchaseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,4 +50,16 @@ Route::group([
     Route::post('/list-restaurant-dish', [ShowController::class, 'listRestaurantDish']);
     // List restaurant by dish
     Route::post('/list-restaurant-by-dish', [ShowController::class, 'listRestaurantByDish']);
+    // List users by transaction
+    Route::post('/list-user-by-transaction', [ShowController::class, 'listUserByTransaction']);
+    // List restaurant by number transaction or transaction amount
+    Route::post('/list-restaurant-by-transaction', [ShowController::class, 'listRestaurantByTransaction']);
+    // Total number of users by above or below transaction amount with daterange
+    Route::post('/total-user-by-transaction-amount', [ShowController::class, 'totalUserByTransactionAmount']);
+    // List all transaction belonging to a restaurant or user
+    Route::post('/list-transaction', [ShowController::class, 'listTransaction']);
+    // Check balances
+    Route::post('/check-balances', [ShowController::class, 'checkBalances']);
+    // purchase order
+    Route::post('/purchase-order', [PurchaseController::class, 'purchaseOrder']);
 });

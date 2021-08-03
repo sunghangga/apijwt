@@ -20,6 +20,8 @@ class Purchases extends Model
         'total',
         'pay_status',
         'qty_total',
+        'created_at',
+        'updated_at'
     ];
 
     public function getNextId() 

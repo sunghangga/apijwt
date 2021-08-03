@@ -22,6 +22,7 @@ use App\Helpers\GlobalHelper as GH;
 class ImportController extends Controller
 {
     public function __construct() {
+        ini_set('max_execution_time', 1800);
         $this->middleware('auth:api', ['except' => []]);
         $this->guard = "api";
     }
@@ -72,7 +73,7 @@ class ImportController extends Controller
                     $location = explode(",", $value['location']);
                     $company = Company::create([
                         'name' => $value['name'],
-                        'location' => DB::raw("GeomFromText('POINT(".$location[0]." ".$location[1].")')")
+                        'location' => DB::raw("ST_GeomFromText('POINT(".$location[0]." ".$location[1].")')")
                     ]);
     
                     // Create business hours
@@ -167,7 +168,7 @@ class ImportController extends Controller
                         'email' => GH::randMail(),
                         'password' => GH::randPass(),
                         'role_id' => config('const.customer'),
-                        'location' => DB::raw("GeomFromText('POINT(".$location[0]." ".$location[1].")')")
+                        'location' => DB::raw("ST_GeomFromText('POINT(".$location[0]." ".$location[1].")')")
                     ]);
     
                     // Create balance
@@ -193,14 +194,18 @@ class ImportController extends Controller
                                 'pr_no' => GH::getPrNo(),
                                 'total' => $purchase['amount'],
                                 'pay_status' => config('const.paid'),
-                                'qty_total' => 1
+                                'qty_total' => 1,
+                                'created_at' => Carbon::parse($purchase['date'])->format('Y-m-d H:i:s'),
+                                'updated_at' => Carbon::parse($purchase['date'])->format('Y-m-d H:i:s')
                             ]);
     
                             $purchaseDetail = PurchaseDetail::create([
                                 'purchases_id' => $purchases->id,
                                 'product_id' => $data['products_id'],
                                 'price' => $purchase['amount'],
-                                'qty' => 1
+                                'qty' => 1,
+                                'created_at' => Carbon::parse($purchase['date'])->format('Y-m-d H:i:s'),
+                                'updated_at' => Carbon::parse($purchase['date'])->format('Y-m-d H:i:s')
                             ]);
                         }
                         else {
