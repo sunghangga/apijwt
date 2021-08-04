@@ -65,65 +65,78 @@ class PurchaseController extends Controller
         if (auth($this->guard)->user()->role_id == config('const.customer')) {
             // try {
                 DB::beginTransaction();
+                $totalPurchase = 0;
+                $totalQty = 0;
                 $jsonData = json_decode($request->data);
-                return response()->json($jsonData, 400);
-                foreach ($jsonData as $value) {
-                    // Create company table
-                    $location = explode(",", $value['location']);
-                    $company = Company::create([
-                        'name' => $value['name'],
-                        'location' => DB::raw("ST_GeomFromText('POINT(".$location[0]." ".$location[1].")')")
-                    ]);
-    
-                    // Create business hours
-                    if (! is_null($value['business_hours'])) {
-                        $arrHours = explode(" | ", $value['business_hours']);
-                        foreach ($arrHours as $dayHour) {
-                            $dayHour = explode(": ", $dayHour);
-                            $days = explode(", ", $dayHour[0]);
-                            $hour = explode(" - ", $dayHour[1]);
-                            
-                            foreach ($days as $day) {
-                                $businessHours = BusinessHours::create([
-                                    'day' => GH::dayToInt($day),
-                                    'open_time' => Carbon::parse($hour[0])->format('H:i:s'),
-                                    'end_time' => Carbon::parse($hour[1])->format('H:i:s'),
-                                    'company_id' => $company->id
-                                ]);
-                            }
+                
+                // Create purchase
+                $purchases = Purchases::create([
+                    'users_id' => auth($this->guard)->user()->id,
+                    'company_id' => $jsonData[0]->restaurant_id,
+                    'pr_no' => GH::getPrNo(),
+                    'total' => 0,
+                    'pay_status' => config('const.paid'),
+                    'qty_total' => 0
+                ]);
+
+                for ($i = 0; $i < count($jsonData); $i++) {
+                    if ($i > 0) {
+                        if ($jsonData[$i]->restaurant_id != $jsonData[$i-1]->restaurant_id) {
+                            return response()->json([
+                                "message" => "Can't Order from Different Restaurant"
+                            ], 400);
                         }
                     }
-    
-                    // Create balance
-                    $balance = CompanyBalances::create([
-                        'ac_code' => config('const.company_cash'),
-                        'company_id' => $company->id,
-                        'debit' => $value['balance'],
-                        'description' => 'FIRST BALANCES'
+                    // Get products price
+                    $products = Products::select('price')
+                                          ->where('id', '=', $jsonData[$i]->dish_id)
+                                          ->first();
+                    // Create purchase detail
+                    $purchaseDetail = PurchaseDetail::create([
+                        'purchases_id' => $purchases->id,
+                        'product_id' => $jsonData[$i]->dish_id,
+                        'price' => $products->price,
+                        'qty' => $jsonData[$i]->qty
                     ]);
-    
-                    // Create product
-                    foreach ($value['menu'] as $menu) {
-                        $products = Products::create([
-                            'name' => $menu['name'],
-                            'price' => $menu['price'],
-                            'is_active' => 1,
-                            'company_id' => $company->id
-                        ]);
-                    }
                     
+                    $totalPurchase = $totalPurchase + ($jsonData[$i]->qty * $products->price);
+                    $totalQty = $totalQty + $jsonData[$i]->qty;
                 }
+
+                // Update purchases
+                $updatePurchases = Purchases::where('id', '=', $purchases->id)
+                                              ->update(['total' => $totalPurchase,
+                                                        'qty_total' => $totalQty
+                                                        ]);
+
+                // Create company balance
+                $companyBalances = CompanyBalances::create([
+                    'ac_code' => config('const.company_cash'),
+                    'company_id' => $jsonData[0]->restaurant_id,
+                    'debit' => $totalPurchase,
+                    'refno' => $purchases->pr_no,
+                    'description' => 'Purchase with transaction ID '.$purchases->pr_no
+                ]);
+
+                // Create customer balance
+                $customerBalances = CustomerBalances::create([
+                    'ac_code' => config('const.customer_cash'),
+                    'users_id' => auth($this->guard)->user()->id,
+                    'credit' => $totalPurchase,
+                    'refno' => $purchases->pr_no,
+                    'description' => 'Purchase with transaction ID '.$purchases->pr_no
+                ]);
     
                 DB::commit();
     
-                if($company) {
+                if($purchases) {
                     return response()->json([
-                        "message" => "Import Success"
+                        "message" => "Create Purchase Order Success"
                     ], 201);
                 } else {
                     return response()->json([
-                        "message" => "Import Failed"
-                    ], 201);
+                        "message" => "Create Purchase Order Failed"
+                    ], 400);
                 }             
             // } catch (\Exception $e) {
             //     DB::rollback();
