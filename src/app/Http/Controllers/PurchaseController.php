@@ -63,7 +63,7 @@ class PurchaseController extends Controller
 
         // Process data import
         if (auth($this->guard)->user()->role_id == config('const.customer')) {
-            // try {
+            try {
                 DB::beginTransaction();
                 $totalPurchase = 0;
                 $totalQty = 0;
@@ -138,13 +138,13 @@ class PurchaseController extends Controller
                         "message" => "Create Purchase Order Failed"
                     ], 400);
                 }             
-            // } catch (\Exception $e) {
-            //     DB::rollback();
-            //     return response()->json([              
-            //         'message' => 'Unknown Error',     
-            //         'error' => $e               
-            //     ], 520);
-            // }           
+            } catch (\Exception $e) {
+                DB::rollback();
+                return response()->json([              
+                    'message' => 'Unknown Error',     
+                    'error' => $e               
+                ], 520);
+            }           
         }
         else {
             return response()->json([
