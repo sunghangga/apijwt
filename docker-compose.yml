@@ -11,8 +11,8 @@ services:
       - "8088:80"
     volumes:
       - ./src:/var/www/html
-      - ./nginx/conf.d/:/etc/nginx/conf.d/
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker-compose/nginx/conf.d/:/etc/nginx/conf.d/
+      - ./docker-compose/nginx/nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - php
       - mysql
@@ -28,12 +28,12 @@ services:
       - "4306:3306"
     volumes:
       - dbdata:/var/lib/mysql
-      - ./mysql/my.cnf:/etc/mysql/my.cnf
+      - ./docker-compose/mysql/my.cnf:/etc/mysql/my.cnf
     environment:
       MYSQL_DATABASE: db_apijwt
-      MYSQL_USER: maestronic
-      MYSQL_PASSWORD: Maestronic123
-      MYSQL_ROOT_PASSWORD: Maestronic123
+      MYSQL_USER: apijwt
+      MYSQL_PASSWORD: apijwt
+      MYSQL_ROOT_PASSWORD: apijwt
       SERVICE_TAGS: dev
       SERVICE_NAME: mysql
     networks:
@@ -46,7 +46,7 @@ services:
     container_name: php
     volumes:
       - ./src:/var/www/html
-      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+      - ./docker-compose/php/local.ini:/usr/local/etc/php/conf.d/local.ini
     ports:
       - "9000:9000"
     networks:
