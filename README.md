@@ -45,8 +45,7 @@ docker-compose exec php php artisan key:generate
 docker-compose exec php php artisan migrate:fresh –seed
 ```
 
-Laravel project can be access in http://localhost:8088
-If want connect to mysql container, use this setting:
+Laravel project can be access in http://localhost:8088. If want connect to mysql container, use this setting:
 
 ```
 Host: localhost
