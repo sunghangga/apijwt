@@ -55,4 +55,6 @@ Username: apijwt
 Password: apijwt
 ```
 
+For the ERD can be run from [draw.io](https://draw.io/) site.
+
 Here for the [documentation](https://github.com/sunghangga/apijwt/blob/master/documentation.docx)
