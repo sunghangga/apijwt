@@ -54,3 +54,5 @@ Port: 4306
 Username: apijwt
 Password: apijwt
 ```
+
+Here for the [documentation](https://github.com/sunghangga/apijwt/blob/master/documentation.docx)
