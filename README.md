@@ -42,10 +42,10 @@ DB_PASSWORD=apijwt
 ```
 docker-compose exec php composer install
 docker-compose exec php php artisan key:generate
-docker-compose exec php php artisan migrate:fresh –seed
+docker-compose exec php php artisan migrate:fresh --seed
 ```
 
-Laravel project can be access in http://localhost:8088. If want connect to mysql container, use this setting:
+Docker project can be access in http://localhost:8088. If want connect to mysql container, use this setting:
 
 ```
 Host: localhost
